@@ -43,13 +43,13 @@ def run(dest_file, dest_dir, project, max_num_configs, verbose):
 
         msvc_variants = [
             ['Debug', ['/Od', '/Ob0', '/MDd', '/GS', '/DWIN32', '/D_WINDOWS']],
-            ['RelWithDebInfo', ['/O2', '/Ob1', '/MD', '/GS', '/DWIN32', '/D_WINDOWS', '/DNDEBUG']],
+            #['RelWithDebInfo', ['/O2', '/Ob1', '/MD', '/GS', '/DWIN32', '/D_WINDOWS', '/DNDEBUG']],
             ['Release', ['/O2', '/Ob2', '/MD', '/GS', '/DWIN32', '/D_WINDOWS', '/DNDEBUG']],
         ]
         
         gcc_variants = [
             ["Debug", ['-O0', '-g']],
-            ["RelWithDebInfo", ['-O2', '-g', '-DNDEBUG']],
+            #["RelWithDebInfo", ['-O2', '-g', '-DNDEBUG']],
             ["Release", ['-O3', '-DNDEBUG']],
         ]
 
@@ -90,7 +90,7 @@ def run(dest_file, dest_dir, project, max_num_configs, verbose):
 
                     cc = ['Visual Studio {}'.format(vs_version), cl_path]
                     
-                    for cpp in [14, 17]:
+                    for cpp in [14, 17, 20]:
                         for variant in msvc_variants:
                             c = Config()
                             c.cpp = cpp
@@ -110,7 +110,7 @@ def run(dest_file, dest_dir, project, max_num_configs, verbose):
                 if not os.path.exists(cc[1]):
                     continue
                 
-                for cpp in [11, 14, 17]:
+                for cpp in [11, 14, 17, 20]:
                     for variant in cc[3]:
                         if cc[1] is not None:
                             c = Config()
@@ -123,13 +123,8 @@ def run(dest_file, dest_dir, project, max_num_configs, verbose):
                             yield c
         elif is_linux:
             for cc in [
-                ['Clang 6', '/usr/bin/clang++-6'],
-                ['Clang 7', '/usr/bin/clang++-7'],
-                ['Clang 8', '/usr/bin/clang++-8'],
-                ['Clang 9', '/usr/bin/clang++-9'],
-                ['GCC 7', '/usr/bin/g++-7'],
-                ['GCC 8', '/usr/bin/g++-8'],
-                ['GCC 9', '/usr/bin/g++-9'],
+                ['Clang 11', '/usr/bin/clang++-11'],
+                ['GCC 10', '/usr/bin/g++-10'],
             ]:
                 if not os.path.exists(cc[1]):
                     continue
@@ -147,7 +142,7 @@ def run(dest_file, dest_dir, project, max_num_configs, verbose):
                         extra_args.append('-stdlib=libc++')
                         var_suffix = " (libc++)"
 
-                    for cpp in [11, 14, 17]:
+                    for cpp in [11, 14, 17, 20]:
                         for variant in gcc_variants:
                             c = Config()
                             c.cpp = cpp
@@ -166,6 +161,7 @@ def run(dest_file, dest_dir, project, max_num_configs, verbose):
 
     since_cpp14_configs = [c for c in all_configs if c.cpp >= 14]
     since_cpp17_configs = [c for c in all_configs if c.cpp >= 17]
+    since_cpp20_configs = [c for c in all_configs if c.cpp >= 20]
 
 
     def truncate_cfgs(cfgs):
@@ -177,6 +173,7 @@ def run(dest_file, dest_dir, project, max_num_configs, verbose):
     all_configs = truncate_cfgs(all_configs)
     since_cpp14_configs = truncate_cfgs(since_cpp14_configs)
     since_cpp17_configs = truncate_cfgs(since_cpp17_configs)
+    since_cpp20_configs = truncate_cfgs(since_cpp20_configs)
 
     project_list = []
     project_jobs = {}
@@ -322,6 +319,26 @@ def run(dest_file, dest_dir, project, max_num_configs, verbose):
 
                 add("Standard Library", "C++ Standard Library", url_cpp,
                     url_cpp + "/" + h, "", "<" + h + ">", h, [c], dest_dir)
+
+        for h in [
+            "compare",
+            "version",
+            "source_location",
+            "format",
+            "span",
+            "ranges",
+            "bit",
+            "numbers",
+            "syncstream",
+            "stop_token",
+            "semaphore",
+            "semaphore",
+            "latch",
+            "barrier",
+        ]:
+            add("Standard Library", "C++ Standard Library", url_cpp,
+                url_cpp + "/" + h, "", "<" + h + ">", h, since_cpp20_configs, dest_dir)
+
 
     if not project or project == 'stl_c':
         # ===============================================================
@@ -688,7 +705,11 @@ def run(dest_file, dest_dir, project, max_num_configs, verbose):
             cfgpath = libpath + "/project.json"
             assert os.path.exists(cfgpath), "no config found in " + cfgpath
             with open(cfgpath, "r") as f:
-                cfg = json.load(f)
+                try:
+                    cfg = json.load(f)
+                except json.JSONDecodeError as e:
+                    print("Can't parse \"{}\"".format(cfgpath))
+                    raise e
             assert "type" in cfg, "no type specified in project.json"
 
             if cfg["type"] == "file":

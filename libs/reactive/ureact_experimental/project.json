@@ -1,0 +1,19 @@
+{
+    "type": "github",
+    "url": "https://github.com/YarikTH/ureact",
+    "working_dir": "include",
+    "files": [
+        "ureact/ureact.hpp",
+        "ureact/ureact_using_standard_algo.hpp",
+        "ureact/algorithm.hpp",
+        "ureact/all_headers.hpp",
+        "ureact/current_headers.hpp",
+        "ureact/memory.hpp",
+        "ureact/only_checp_headers.hpp",
+        "ureact/ureact.hpp",
+        "ureact/vector.hpp"
+    ],
+    "versions": [
+        "feature/check_std_headers_cost"
+    ]
+}

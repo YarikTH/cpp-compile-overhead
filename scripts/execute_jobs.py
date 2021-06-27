@@ -6,6 +6,7 @@ import os
 import argparse
 import platform
 import json
+import subprocess
 
 import scripts.analyze_file
 
@@ -149,8 +150,11 @@ def run(jobs_file, dest_file, dest_dir, cache_file, verbose):
         id = j["cache-key"]
         compiler_args = j["args"]
         print("[{}/{}] executing '{} {}' for file {}".format(done, len(to_execute), j['compiler_name'], j['variant'], j['file']))
-        res = scripts.analyze_file.run(j['file'], j["include_dirs"], dest_dir, j['compiler'], j['compiler_type'], compiler_args, not verbose, verbose)
-
+        try:
+            res = scripts.analyze_file.run(j['file'], j["include_dirs"], dest_dir, j['compiler'], j['compiler_type'], compiler_args, not verbose, verbose)
+        except subprocess.CalledProcessError as e:
+            print("Analize failed: {}".format(e))
+            continue
         res = json.loads(res)
         job_cache[id] = res
 
